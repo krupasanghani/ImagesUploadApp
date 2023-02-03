@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">EnggServicesInspection</string>
+
+    <string name="equipment_id">Equipment ID</string>
+    <string name="location">Location</string>
+    <string name="description">Description</string>
+    <string name="manufacturer">Manufacturer</string>
+    <string name="notes">Notes</string>
+    <string name="audiofiles">AudioFile</string>
+    <string name="image_gps">ImageGPS</string>
+    <string name="image_date_time">ImageDateTime</string>
+    <string name="image_file">ImageFile</string>
+    <string name="btn_submit">Submit</string>
+    <string name="add_engineering_inspection_service">Add Inspection Service</string>
+</resources>

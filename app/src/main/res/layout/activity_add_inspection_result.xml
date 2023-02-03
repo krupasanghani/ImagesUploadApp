@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/backAppCompatImageView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:padding="@dimen/_12sdp"
+            android:src="@drawable/ic_back" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginVertical="@dimen/_12sdp"
+            android:fontFamily="@font/ubuntu_medium"
+            android:gravity="center"
+            android:text="@string/add_engineering_inspection_service"
+            android:textColor="@color/black"
+            android:textSize="@dimen/_16sdp" />
+
+    </RelativeLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/_16sdp">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/imageRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:layout_marginVertical="@dimen/_12sdp"
+                android:orientation="horizontal"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/imageAppCompatTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/imageRecyclerView"
+                android:layout_marginVertical="@dimen/_4sdp"
+                android:background="@drawable/background_with_borders"
+                android:fontFamily="@font/ubuntu_regular"
+                android:includeFontPadding="false"
+                android:padding="@dimen/_14sdp"
+                android:text="@string/image_file"
+                android:textColor="@color/black"
+                android:textSize="@dimen/_12sdp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/dateTimeAppCompatTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/imageAppCompatTextView"
+                android:layout_marginVertical="@dimen/_4sdp"
+                android:background="@drawable/background_with_borders"
+                android:fontFamily="@font/ubuntu_regular"
+                android:includeFontPadding="false"
+                android:padding="@dimen/_14sdp"
+                android:text="@string/image_date_time"
+                android:textColor="@color/black"
+                android:textSize="@dimen/_12sdp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/audioAppCompatTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/dateTimeAppCompatTextView"
+                android:layout_marginVertical="@dimen/_4sdp"
+                android:background="@drawable/background_with_borders"
+                android:fontFamily="@font/ubuntu_regular"
+                android:includeFontPadding="false"
+                android:padding="@dimen/_14sdp"
+                android:text="@string/audiofiles"
+                android:textColor="@color/black"
+                android:textSize="@dimen/_12sdp" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/notesAppCompatEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/audioAppCompatTextView"
+                android:layout_marginVertical="@dimen/_4sdp"
+                android:background="@drawable/background_with_borders"
+                android:fontFamily="@font/ubuntu_regular"
+                android:hint="@string/notes"
+                android:maxLines="4"
+                android:padding="@dimen/_12sdp"
+                android:textColorHint="@color/black"
+                android:textSize="@dimen/_12sdp" />
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/submitAppCompatTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/notesAppCompatEditText"
+                android:layout_alignParentBottom="true"
+                android:layout_gravity="center"
+                android:layout_marginVertical="@dimen/_14sdp"
+                android:background="@drawable/background_primary"
+                android:fontFamily="@font/ubuntu_medium"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:padding="@dimen/_14sdp"
+                android:text="@string/btn_submit"
+                android:textColor="@color/white"
+                android:textSize="@dimen/_12sdp"
+                android:textStyle="bold" />
+
+        </RelativeLayout>
+
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

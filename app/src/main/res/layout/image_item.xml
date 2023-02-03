@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/imageFrameLayout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/_4sdp">
+
+    <com.makeramen.roundedimageview.RoundedImageView
+        android:id="@+id/mainImageRoundedImageView"
+        android:layout_width="@dimen/_120sdp"
+        android:layout_height="@dimen/_120sdp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_image_picker"
+        app:riv_corner_radius="@dimen/_12sdp" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/audioAppCompatImageView"
+        android:layout_width="@dimen/_20sdp"
+        android:layout_height="@dimen/_20sdp"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="@dimen/_8sdp"
+        android:background="#80000000"
+        android:padding="@dimen/_4sdp"
+        android:src="@drawable/ic_audio_track" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/fileNameAppCompatTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
+        android:layout_marginVertical="@dimen/_8sdp"
+        android:fontFamily="@font/ubuntu_medium"
+        android:gravity="start"
+        android:text="@string/image_file"
+        android:background="#80000000"
+        android:paddingHorizontal="@dimen/_8sdp"
+        android:paddingVertical="@dimen/_4sdp"
+        android:layout_marginStart="@dimen/_12sdp"
+        android:textColor="@color/white"
+        android:textSize="@dimen/_10sdp" />
+
+</FrameLayout>
