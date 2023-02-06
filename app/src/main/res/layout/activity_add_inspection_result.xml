@@ -114,7 +114,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/notesAppCompatEditText"
-                android:layout_alignParentBottom="true"
                 android:layout_gravity="center"
                 android:layout_marginVertical="@dimen/_14sdp"
                 android:background="@drawable/background_primary"
@@ -126,6 +125,22 @@
                 android:textColor="@color/white"
                 android:textSize="@dimen/_12sdp"
                 android:textStyle="bold" />
+
+            <com.krupagajera.enggservicesinspection.utils.SshEditText
+                android:id="@+id/commandSshEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/submitAppCompatTextView"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="10dp"
+                android:background="@color/white"
+                android:gravity="top|left"
+                android:imeOptions="actionGo"
+                android:inputType="textMultiLine"
+                android:minLines="10"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textCursorDrawable="@null" />
 
         </RelativeLayout>
 
