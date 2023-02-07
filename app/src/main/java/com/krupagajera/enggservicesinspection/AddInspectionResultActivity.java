@@ -60,9 +60,14 @@ import com.krupagajera.enggservicesinspection.utils.ActionUtilities;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import me.rosuh.filepicker.config.FilePickerManager;
+import me.rosuh.filepicker.filetype.AudioFileType;
+import me.rosuh.filepicker.filetype.FileType;
 
 public class AddInspectionResultActivity extends AppCompatActivity implements LocationListener, ImageAdapter.OnShareClickedListener, ConnectionStatusListener {
 
@@ -79,6 +84,7 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
     private ConnectionStatusListener mListener;
     private Handler mHandler;
     private String mLastLine;
+    List<String> list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +97,11 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
         getLocation();
 
         initUI();
+
+        mSUI = new SessionUserInfo(user, base_url, pass, port);
+
+        SessionController.getSessionController().setUserInfo(mSUI);
+        SessionController.getSessionController().connect();
 
         imageAdapter = new ImageAdapter(AddInspectionResultActivity.this, listOfImage);
         imageAdapter.setOnShareClickedListener(this);
@@ -181,10 +192,19 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
         binding.audioAppCompatTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent_upload = new Intent();
-                intent_upload.setType("audio/*");
-                intent_upload.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(intent_upload, 1234);
+//                mSUI = new SessionUserInfo(user, base_url, pass, port);
+
+//                SessionController.getSessionController().setUserInfo(mSUI);
+//                SessionController.getSessionController().connect();
+
+                List<FileType> listoffiles = new ArrayList<>();
+                listoffiles.add(new AudioFileType());
+
+                FilePickerManager
+                        .from(AddInspectionResultActivity.this)
+                        .enableSingleChoice()
+                        .registerFileType(listoffiles, false)
+                        .forResult(FilePickerManager.REQUEST_CODE);
             }
         });
 
@@ -284,10 +304,48 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                 listOfAudio.add(uri);
 
                 System.out.println("List of audio: " + listOfAudio);
-                mSUI = new SessionUserInfo(user, base_url, pass, port);
-
+//                mSUI = new SessionUserInfo(user, base_url, pass, port);
+//
 //                SessionController.getSessionController().setUserInfo(mSUI);
 //                SessionController.getSessionController().connect();
+
+                FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
+                progressDialog.setIndeterminate(false);
+                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                progressDialog.show();
+
+                File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
+//                File file = new File(list.get(0));
+
+                File[] arr = {file};
+                String[] des = {file.getName()};
+
+                System.out.println("name: " + file.getName());
+                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
+
+            } else if(FilePickerManager.REQUEST_CODE == requestCode) {
+                list = FilePickerManager.obtainData();
+                System.out.println("list: " + list);
+//                mSUI = new SessionUserInfo(user, base_url, pass, port);
+//
+//                SessionController.getSessionController().setUserInfo(mSUI);
+//                SessionController.getSessionController().connect();
+
+
+                FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
+                progressDialog.setIndeterminate(false);
+                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                progressDialog.show();
+
+//                File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
+                File file = new File(list.get(0));
+
+                File[] arr = {file};
+                String[] des = {file.getName()};
+
+                System.out.println("name: " + file.getName());
+                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
+                return;
             } else {
                 Uri uri = data.getData();
 
@@ -301,6 +359,19 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                 System.out.println("as: " + listOfImage);
                 imageAdapter.updateImageList(listOfImage);
 
+                FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
+                progressDialog.setIndeterminate(false);
+                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                progressDialog.show();
+
+                File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
+//                File file = new File(list.get(0));
+
+                File[] arr = {file};
+                String[] des = {file.getName()};
+
+                System.out.println("name: " + file.getName());
+                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
 //                mSUI = new SessionUserInfo(user, base_url, pass, port);
 //
 //                SessionController.getSessionController().setUserInfo(mSUI);
@@ -313,18 +384,6 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
         } else {
             Toast.makeText(this, "Task Cancelled", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    public String getRealPathFromURI (Uri contentUri) {
-        String path = null;
-        String[] proj = { MediaStore.MediaColumns.DATA };
-        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-        if (cursor.moveToFirst()) {
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
-            path = cursor.getString(column_index);
-        }
-        cursor.close();
-        return path;
     }
 
     private void getLocation() {
@@ -410,10 +469,10 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
     public void ShareClicked(ImageResponse myListData) {
         System.out.println("Clicked me : " + myListData);
 
-        Intent intent_upload = new Intent();
-        intent_upload.setType("audio/*");
-        intent_upload.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(intent_upload, 1);
+//        FilePickerManager
+//                .from(AddInspectionResultActivity.this)
+//                .forResult(FilePickerManager.REQUEST_CODE);
+
     }
 
     @Override
@@ -441,146 +500,25 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
         SessionController.getSessionController().openShell(mHandler, binding.commandSshEditText);
 
 
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-
-                FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
-                progressDialog.setIndeterminate(false);
-                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                progressDialog.show();
-
-//                File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
-                File file = new File(listOfAudio.get(0).getPath());
-
-                File[] arr = {file};
-                String[] des = {file.getName()};
-
-                System.out.println("name: " + file.getName());
-                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
-            }
-        });
-    }
-
-
-    public static String getPath(final Context context, final Uri uri) {
-
-        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-
-        // DocumentProvider
-        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
-            // ExternalStorageProvider
-            if (isExternalStorageDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-
-                if ("primary".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + "/" + split[1];
-                }
-
-                // TODO handle non-primary volumes
-            }
-            // DownloadsProvider
-            else if (isDownloadsDocument(uri)) {
-
-                final String id = DocumentsContract.getDocumentId(uri);
-                final Uri contentUri = ContentUris.withAppendedId(
-                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-
-                return getDataColumn(context, contentUri, null, null);
-            }
-            // MediaProvider
-            else if (isMediaDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-
-                Uri contentUri = null;
-                if ("image".equals(type)) {
-                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                } else if ("video".equals(type)) {
-                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                } else if ("audio".equals(type)) {
-                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                }
-
-                final String selection = "_id=?";
-                final String[] selectionArgs = new String[] {
-                        split[1]
-                };
-
-                return getDataColumn(context, contentUri, selection, selectionArgs);
-            }
-        }
-        // MediaStore (and general)
-        else if ("content".equalsIgnoreCase(uri.getScheme())) {
-            return getDataColumn(context, uri, null, null);
-        }
-        // File
-        else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            return uri.getPath();
-        }
-
-        return null;
-    }
-
-    /**
-     * Get the value of the data column for this Uri. This is useful for
-     * MediaStore Uris, and other file-based ContentProviders.
-     *
-     * @param context The context.
-     * @param uri The Uri to query.
-     * @param selection (Optional) Filter used in the query.
-     * @param selectionArgs (Optional) Selection arguments used in the query.
-     * @return The value of the _data column, which is typically a file path.
-     */
-    public static String getDataColumn(Context context, Uri uri, String selection,
-                                       String[] selectionArgs) {
-
-        Cursor cursor = null;
-        final String column = "_data";
-        final String[] projection = {
-                column
-        };
-
-        try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-                    null);
-            if (cursor != null && cursor.moveToFirst()) {
-                final int column_index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(column_index);
-            }
-        } finally {
-            if (cursor != null)
-                cursor.close();
-        }
-        return null;
-    }
-
-
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is ExternalStorageProvider.
-     */
-    public static boolean isExternalStorageDocument(Uri uri) {
-        return "com.android.externalstorage.documents".equals(uri.getAuthority());
-    }
-
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is DownloadsProvider.
-     */
-    public static boolean isDownloadsDocument(Uri uri) {
-        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
-    }
-
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is MediaProvider.
-     */
-    public static boolean isMediaDocument(Uri uri) {
-        return "com.android.providers.media.documents".equals(uri.getAuthority());
+//        new Handler(Looper.getMainLooper()).post(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//                FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
+//                progressDialog.setIndeterminate(false);
+//                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+//                progressDialog.show();
+//
+////                File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
+//                File file = new File(list.get(0));
+//
+//                File[] arr = {file};
+//                String[] des = {file.getName()};
+//
+//                System.out.println("name: " + file.getName());
+//                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
+//            }
+//        });
     }
 
 }

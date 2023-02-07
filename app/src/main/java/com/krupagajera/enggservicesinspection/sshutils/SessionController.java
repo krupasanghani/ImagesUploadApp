@@ -315,11 +315,13 @@ public class SessionController {
      * <b>mSessionUserInfo</b>.
      */
     public class SshRunnable implements Runnable {
+        Boolean isConnectedJsch = false;
 
         public void run() {
             JSch jsch = new JSch();
             mSession = null;
             try {
+                isConnectedJsch = false;
                 mSession = jsch.getSession(mSessionUserInfo.getUser(), mSessionUserInfo.getHost(),
                         mSessionUserInfo.getPort()); // port 22
 
@@ -346,11 +348,19 @@ public class SessionController {
                     while (true) {
                         //keep track of connection status
                         try {
-                            Thread.sleep(2000);
+
+                            if(isConnectedJsch) {
+                                Thread.sleep(2000);
+                            }
                             if (mConnectStatusListener != null) {
-                                if (mSession.isConnected()) {
+
+                                System.out.println("Connection status: " + mSession.isConnected());
+                                if (mSession.isConnected() && !isConnectedJsch) {
                                     mConnectStatusListener.onConnected();
-                                } else mConnectStatusListener.onDisconnected();
+                                    isConnectedJsch = true;
+                                } else if(!mSession.isConnected()) {
+                                    mConnectStatusListener.onDisconnected();
+                                }
                             }
                         } catch (InterruptedException e) {
 

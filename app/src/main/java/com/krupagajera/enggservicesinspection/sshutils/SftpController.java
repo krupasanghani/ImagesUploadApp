@@ -196,7 +196,19 @@ public class SftpController {
         ChannelSftp channelSftp = (ChannelSftp) channel;
 
         for (int i = 0; i<localFiles.length; i++) {
-            String sTargetDirectory = "images/" + FILE_SEPARATOR + destinations[i];
+            String subPath = null;
+            int index = destinations[i].lastIndexOf('.');
+            if(index > 0) {
+                String extension = destinations[i].substring(index + 1);
+                System.out.println(destinations[i] + "\t" + extension);
+                if(extension.equals("aac") || extension.equals("mp3") || extension.equals("amr") || extension.equals("ogg") || extension.equals("wav")) {
+                    subPath = "audio/";
+                } else {
+                    subPath = "images/";
+                }
+            }
+
+            String sTargetDirectory = subPath + FILE_SEPARATOR + destinations[i];
             channelSftp.put(localFiles[i].getPath(), sTargetDirectory, spm, ChannelSftp.APPEND);
         }
 
