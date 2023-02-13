@@ -12,4 +12,8 @@
     <string name="image_file">ImageFile</string>
     <string name="btn_submit">Submit</string>
     <string name="add_engineering_inspection_service">Add Inspection Service</string>
+    <string name="start_recording">Start recording</string>
+    <string name="stop_recording">Stop recording</string>
+    <string name="play_recording">Play recording</string>
+    <string name="stop_playing">Upload Audio</string>
 </resources>

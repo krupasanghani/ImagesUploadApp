@@ -41,22 +41,33 @@
             android:orientation="vertical"
             android:padding="@dimen/_16sdp">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/imageRecyclerView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+            <!--            <androidx.recyclerview.widget.RecyclerView-->
+            <!--                android:id="@+id/imageRecyclerView"-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:layout_alignParentStart="true"-->
+            <!--                android:layout_alignParentTop="true"-->
+            <!--                android:layout_alignParentEnd="true"-->
+            <!--                android:layout_marginVertical="@dimen/_12sdp"-->
+            <!--                android:orientation="horizontal"-->
+            <!--                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />-->
+
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/recordImageAppCompatImageView"
+                android:layout_width="@dimen/_200sdp"
+                android:layout_height="@dimen/_200sdp"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentEnd="true"
-                android:layout_marginVertical="@dimen/_12sdp"
-                android:orientation="horizontal"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                android:layout_marginVertical="@dimen/_6sdp"
+                android:visibility="gone" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/imageAppCompatTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/imageRecyclerView"
+                android:layout_below="@+id/recordImageAppCompatImageView"
                 android:layout_marginVertical="@dimen/_4sdp"
                 android:background="@drawable/background_with_borders"
                 android:fontFamily="@font/ubuntu_regular"
@@ -94,11 +105,84 @@
                 android:textColor="@color/black"
                 android:textSize="@dimen/_12sdp" />
 
+            <LinearLayout
+                android:id="@+id/recordAudio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/audioAppCompatTextView"
+                android:layout_marginTop="@dimen/_8sdp"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:weightSum="4">
+
+                <!--Textview to start audio recording
+                    drawableTop will add above mic image-->
+                <TextView
+                    android:id="@+id/btnRecord"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/background_with_borders"
+                    android:padding="5dp"
+                    android:text="@string/start_recording"
+                    android:textAlignment="center"
+                    android:textColor="@color/black"
+                    app:drawableTopCompat="@drawable/ic_mic" />
+
+                <!--Textview to stop audio recording
+                    drawableTop will add above mic image-->
+                <TextView
+                    android:id="@+id/btnStop"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/background_with_borders"
+                    android:padding="5dp"
+                    android:text="@string/stop_recording"
+                    android:textAlignment="center"
+                    android:textColor="@color/black"
+                    app:drawableTopCompat="@drawable/ic_mic_off" />
+
+                <!--Textview to play audio that is recorded
+                    drawableTop will add above mic image-->
+                <TextView
+                    android:id="@+id/btnPlay"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/background_with_borders"
+                    android:padding="5dp"
+                    android:text="@string/play_recording"
+                    android:textAlignment="center"
+                    android:textColor="@color/black"
+                    app:drawableTopCompat="@drawable/ic_play" />
+
+                <!--Textview to pause the play of audio recording
+                    drawableTop will add above mic image-->
+                <TextView
+                    android:id="@+id/btnStopPlay"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/background_with_borders"
+                    android:lines="2"
+                    android:padding="5dp"
+                    android:text="@string/stop_playing"
+                    android:textAlignment="center"
+                    android:textColor="@color/black"
+                    app:drawableTopCompat="@drawable/ic_pause" />
+
+            </LinearLayout>
+
             <androidx.appcompat.widget.AppCompatEditText
                 android:id="@+id/notesAppCompatEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/audioAppCompatTextView"
+                android:layout_below="@+id/recordAudio"
                 android:layout_marginVertical="@dimen/_4sdp"
                 android:background="@drawable/background_with_borders"
                 android:fontFamily="@font/ubuntu_regular"
@@ -109,28 +193,42 @@
                 android:textSize="@dimen/_12sdp" />
 
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/submitAppCompatTextView"
+            <FrameLayout
+                android:id="@+id/buttonSubmitFrameLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/notesAppCompatEditText"
-                android:layout_gravity="center"
                 android:layout_marginVertical="@dimen/_14sdp"
-                android:background="@drawable/background_primary"
-                android:fontFamily="@font/ubuntu_medium"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:padding="@dimen/_14sdp"
-                android:text="@string/btn_submit"
-                android:textColor="@color/white"
-                android:textSize="@dimen/_12sdp"
-                android:textStyle="bold" />
+                android:layout_below="@+id/notesAppCompatEditText">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/submitAppCompatTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:background="@drawable/background_primary"
+                    android:fontFamily="@font/ubuntu_medium"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:padding="@dimen/_14sdp"
+                    android:text="@string/btn_submit"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/_12sdp"
+                    android:textStyle="bold" />
+
+                <ProgressBar
+                    android:id="@+id/progressFrameLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="gone"/>
+
+            </FrameLayout>
 
             <com.krupagajera.enggservicesinspection.utils.SshEditText
                 android:id="@+id/commandSshEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/submitAppCompatTextView"
+                android:layout_below="@+id/buttonSubmitFrameLayout"
                 android:layout_alignParentBottom="true"
                 android:layout_marginBottom="10dp"
                 android:background="@color/white"

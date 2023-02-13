@@ -3,27 +3,25 @@ package com.krupagajera.enggservicesinspection;
 import static com.krupagajera.enggservicesinspection.utils.Constants.base_url;
 import static com.krupagajera.enggservicesinspection.utils.Constants.pass;
 import static com.krupagajera.enggservicesinspection.utils.Constants.port;
+import static com.krupagajera.enggservicesinspection.utils.Constants.url;
 import static com.krupagajera.enggservicesinspection.utils.Constants.user;
 
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationListener;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.net.Uri;
-import android.os.Build;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -37,7 +35,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.loader.content.CursorLoader;
 
 import com.github.dhaval2404.imagepicker.ImagePicker;
 import com.github.florent37.singledateandtimepicker.SingleDateAndTimePicker;
@@ -48,7 +45,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
-import com.krupagajera.enggservicesinspection.adapter.ImageAdapter;
 import com.krupagajera.enggservicesinspection.databinding.ActivityAddInspectionResultBinding;
 import com.krupagajera.enggservicesinspection.model.ImageResponse;
 import com.krupagajera.enggservicesinspection.sshutils.ConnectionStatusListener;
@@ -59,32 +55,38 @@ import com.krupagajera.enggservicesinspection.sshutils.SessionUserInfo;
 import com.krupagajera.enggservicesinspection.utils.ActionUtilities;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import me.rosuh.filepicker.config.FilePickerManager;
-import me.rosuh.filepicker.filetype.AudioFileType;
-import me.rosuh.filepicker.filetype.FileType;
-
-public class AddInspectionResultActivity extends AppCompatActivity implements LocationListener, ImageAdapter.OnShareClickedListener, ConnectionStatusListener {
+public class AddInspectionResultActivity extends AppCompatActivity implements LocationListener, ConnectionStatusListener {
 
     private ActivityAddInspectionResultBinding binding;
     private FusedLocationProviderClient client;
-    private ImageAdapter imageAdapter;
     private ArrayList<ImageResponse> listOfImage = new ArrayList<>();
     private ArrayList<Uri> listOfAudio = new ArrayList<>();
 
-    private static final String EXTERNAL_STORAGE_FOLDER = "Downloads";
-    private static final int FILE_PICKER_REQUEST_CODE = 1;
-
     private SessionUserInfo mSUI;
-    private ConnectionStatusListener mListener;
     private Handler mHandler;
     private String mLastLine;
     List<String> list;
+    int requestCode = 1996;
+
+    // creating a variable for media recorder object class.
+    private MediaRecorder mRecorder;
+
+    // creating a variable for mediaplayer class
+    private MediaPlayer mPlayer;
+    private String locationInfo;
+
+    // string variable is created for storing a file name
+    private static String mFileName = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,16 +98,14 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
 
         getLocation();
 
+//        new ConnectMySql().execute();
+
         initUI();
 
         mSUI = new SessionUserInfo(user, base_url, pass, port);
 
         SessionController.getSessionController().setUserInfo(mSUI);
         SessionController.getSessionController().connect();
-
-        imageAdapter = new ImageAdapter(AddInspectionResultActivity.this, listOfImage);
-        imageAdapter.setOnShareClickedListener(this);
-        binding.imageRecyclerView.setAdapter(imageAdapter);
 
         if (isNetworkAvailable(AddInspectionResultActivity.this)) {
             Toast.makeText(AddInspectionResultActivity.this, "Network available", Toast.LENGTH_SHORT).show();
@@ -186,25 +186,15 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
             @Override
             public void onClick(View view) {
                 System.out.println("Clicked submit");
+                new ConnectMySql().execute();
             }
         });
 
         binding.audioAppCompatTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                mSUI = new SessionUserInfo(user, base_url, pass, port);
+                binding.recordAudio.setVisibility(View.VISIBLE);
 
-//                SessionController.getSessionController().setUserInfo(mSUI);
-//                SessionController.getSessionController().connect();
-
-                List<FileType> listoffiles = new ArrayList<>();
-                listoffiles.add(new AudioFileType());
-
-                FilePickerManager
-                        .from(AddInspectionResultActivity.this)
-                        .enableSingleChoice()
-                        .registerFileType(listoffiles, false)
-                        .forResult(FilePickerManager.REQUEST_CODE);
             }
         });
 
@@ -219,9 +209,72 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
             }
         });
 
+
+        binding.btnRecord.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // start recording method will
+                // start the recording of audio.
+
+                XXPermissions.with(AddInspectionResultActivity.this)
+                        .permission(Permission.RECORD_AUDIO)
+                        .permission(Permission.WRITE_EXTERNAL_STORAGE)
+                        .request(new OnPermissionCallback() {
+
+                            @Override
+                            public void onGranted(@NonNull List<String> permissions, boolean allGranted) {
+                                if (!allGranted) {
+                                    ActionUtilities.showToast(AddInspectionResultActivity.this, "获取部分权限成功，但部分权限未正常授予");
+                                    return;
+                                } else {
+                                    System.out.println("All grant!");
+                                    startRecording();
+                                }
+
+                                ActionUtilities.showToast(AddInspectionResultActivity.this, "获取录音和日历权限成功");
+                            }
+
+                            @Override
+                            public void onDenied(@NonNull List<String> permissions, boolean doNotAskAgain) {
+                                if (doNotAskAgain) {
+                                    ActionUtilities.showToast(AddInspectionResultActivity.this, "被永久拒绝授权，请手动授予录音和日历权限");
+                                    XXPermissions.startPermissionActivity(AddInspectionResultActivity.this, permissions);
+                                } else {
+                                    ActionUtilities.showToast(AddInspectionResultActivity.this, "获取录音和日历权限失败");
+                                }
+                            }
+                        });
+            }
+        });
+        binding.btnStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // pause Recording method will
+                // pause the recording of audio.
+                pauseRecording();
+
+            }
+        });
+        binding.btnPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // play audio method will play
+                // the audio which we have recorded
+                playAudio();
+            }
+        });
+        binding.btnStopPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // pause play method will
+                // pause the play of audio
+                pausePlaying();
+            }
+        });
+
         binding.dateTimeAppCompatTextView.setOnClickListener(new View.OnClickListener() {
             @Override
-                public void onClick(View view) {
+            public void onClick(View view) {
                 new SingleDateAndTimePickerDialog.Builder(AddInspectionResultActivity.this)
                         .bottomSheet()
                         .curved()
@@ -250,6 +303,139 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
 
             }
         });
+    }
+
+    private void startRecording() {
+        // check permission method is used to check
+        // that the user has granted permission
+        // to record and store the audio.
+        // setbackgroundcolor method will change
+        // the background color of text view.
+        binding.btnStop.setBackgroundColor(getResources().getColor(R.color.purple_200));
+        binding.btnRecord.setBackgroundColor(getResources().getColor(R.color.gray));
+        binding.btnPlay.setBackgroundColor(getResources().getColor(R.color.gray));
+        binding.btnStopPlay.setBackgroundColor(getResources().getColor(R.color.gray));
+
+        // we are here initializing our filename variable
+        // with the path of the recorded audio file.
+
+        long time = System.currentTimeMillis();
+        mFileName = getExternalFilesDir(null).getPath();
+        mFileName += "/audio_" + time + ".mp3";
+
+        if (list != null && list.size() > 0)
+            list.clear();
+
+        list = Collections.singletonList(mFileName);
+
+        // Create empty file for record audio files
+        File new_file = new File(mFileName);
+        try {
+            new_file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace(System.out);
+        }
+
+
+        // below method is used to initialize
+        // the media recorder class
+        mRecorder = new MediaRecorder();
+
+        // below method is used to set the audio
+        // source which we are using a mic.
+        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+
+        // below method is used to set
+        // the output format of the audio.
+        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+
+        // below method is used to set the
+        // audio encoder for our recorded audio.
+        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+        // below method is used to set the
+        // output file location for our recorded audio
+        mRecorder.setOutputFile(mFileName);
+        try {
+            // below method will prepare
+            // our audio recorder class
+            mRecorder.prepare();
+        } catch (IOException e) {
+            Log.e("TAG", "prepare() failed");
+        }
+        // start method will start
+        // the audio recording.
+        mRecorder.start();
+//        statusTV.setText("Recording Started");
+    }
+
+
+    public void playAudio() {
+        binding.btnStop.setBackgroundColor(getResources().getColor(R.color.gray));
+        binding.btnRecord.setBackgroundColor(getResources().getColor(R.color.purple_200));
+        binding.btnPlay.setBackgroundColor(getResources().getColor(R.color.gray));
+        binding.btnStopPlay.setBackgroundColor(getResources().getColor(R.color.purple_200));
+
+        // for playing our recorded audio
+        // we are using media player class.
+        mPlayer = new MediaPlayer();
+        try {
+            // below method is used to set the
+            // data source which will be our file name
+            mPlayer.setDataSource(mFileName);
+
+            // below method will prepare our media player
+            mPlayer.prepare();
+
+            // below method will start our media player.
+            mPlayer.start();
+//            statusTV.setText("Recording Started Playing");
+        } catch (IOException e) {
+            Log.e("TAG", "prepare() failed");
+        }
+    }
+
+    public void pauseRecording() {
+        binding.btnStop.setBackgroundColor(getResources().getColor(R.color.gray));
+        binding.btnRecord.setBackgroundColor(getResources().getColor(R.color.purple_200));
+        binding.btnPlay.setBackgroundColor(getResources().getColor(R.color.purple_200));
+        binding.btnStopPlay.setBackgroundColor(getResources().getColor(R.color.purple_200));
+
+        // below method will stop
+        // the audio recording.
+        mRecorder.stop();
+
+        // below method will release
+        // the media recorder class.
+        mRecorder.release();
+        mRecorder = null;
+//        statusTV.setText("Recording Stopped");
+    }
+
+    public void pausePlaying() {
+        // this method will release the media player
+        // class and pause the playing of our recorded audio.
+        if (mPlayer != null)
+            mPlayer.release();
+        mPlayer = null;
+        binding.btnStop.setBackgroundColor(getResources().getColor(R.color.gray));
+        binding.btnRecord.setBackgroundColor(getResources().getColor(R.color.purple_200));
+        binding.btnPlay.setBackgroundColor(getResources().getColor(R.color.purple_200));
+        binding.btnStopPlay.setBackgroundColor(getResources().getColor(R.color.gray));
+
+        FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
+        progressDialog.setIndeterminate(false);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.show();
+
+        File file = new File(list.get(0));
+
+        File[] arr = {file};
+        String[] des = {file.getName()};
+
+        System.out.println("name: " + file.getName());
+        SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
+//        statusTV.setText("Recording Play Stopped");
     }
 
     private boolean isEditTextEmpty(EditText editText) {
@@ -284,80 +470,35 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
 
         if (resultCode == Activity.RESULT_OK) {
             //Image Uri will not be null for RESULT_OK
-            if (requestCode == 1234) {
-                Uri uri = data.getData();
-                System.out.println("Data: " + uri);
-                String filePath = null;
-
-//                System.out.println("Data:uri: " + getPath(AddInspectionResultActivity.this, uri));
-                if (uri != null && "content".equals(uri.getScheme())) {
-                    Cursor cursor = this.getContentResolver().query(uri, new String[] { android.provider.MediaStore.Images.ImageColumns.DATA }, null, null, null);
-                    cursor.moveToFirst();
-                    filePath = cursor.getString(0);
-                    cursor.close();
-                } else {
-                    filePath = uri.getPath();
-                }
-                Log.d("","Chosen path = "+ filePath);
-
-                listOfAudio.clear();
-                listOfAudio.add(uri);
-
-                System.out.println("List of audio: " + listOfAudio);
-//                mSUI = new SessionUserInfo(user, base_url, pass, port);
-//
-//                SessionController.getSessionController().setUserInfo(mSUI);
-//                SessionController.getSessionController().connect();
-
-                FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
-                progressDialog.setIndeterminate(false);
-                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                progressDialog.show();
-
-                File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
-//                File file = new File(list.get(0));
-
-                File[] arr = {file};
-                String[] des = {file.getName()};
-
-                System.out.println("name: " + file.getName());
-                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
-
-            } else if(FilePickerManager.REQUEST_CODE == requestCode) {
-                list = FilePickerManager.obtainData();
+            if (this.requestCode == requestCode) {
+                list = Collections.singletonList(data.getData().getPath());
                 System.out.println("list: " + list);
-//                mSUI = new SessionUserInfo(user, base_url, pass, port);
-//
-//                SessionController.getSessionController().setUserInfo(mSUI);
-//                SessionController.getSessionController().connect();
-
 
                 FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
                 progressDialog.setIndeterminate(false);
                 progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                 progressDialog.show();
 
-//                File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
                 File file = new File(list.get(0));
 
                 File[] arr = {file};
                 String[] des = {file.getName()};
 
                 System.out.println("name: " + file.getName());
-                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
+//                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
                 return;
             } else {
                 Uri uri = data.getData();
+
+                binding.recordImageAppCompatImageView.setVisibility(View.VISIBLE);
+                binding.recordImageAppCompatImageView.setImageURI(uri);
 
                 ImageResponse imageResponse = new ImageResponse();
                 imageResponse.setImage(new File(uri.getPath()).getName());
                 imageResponse.setImageId("IOP");
                 imageResponse.setImageFile(uri);
-
+                listOfImage.clear();
                 listOfImage.add(imageResponse);
-
-                System.out.println("as: " + listOfImage);
-                imageAdapter.updateImageList(listOfImage);
 
                 FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
                 progressDialog.setIndeterminate(false);
@@ -408,6 +549,7 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                                 public void onSuccess(Location location) {
                                     if (location != null) {
                                         System.out.println("location: " + location);
+//                                        locationInfo = location.getA;
                                     }
                                 }
                             });
@@ -465,15 +607,6 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
         LocationListener.super.onProviderDisabled(provider);
     }
 
-    @Override
-    public void ShareClicked(ImageResponse myListData) {
-        System.out.println("Clicked me : " + myListData);
-
-//        FilePickerManager
-//                .from(AddInspectionResultActivity.this)
-//                .forResult(FilePickerManager.REQUEST_CODE);
-
-    }
 
     @Override
     public void onDisconnected() {
@@ -498,27 +631,61 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
             }
         });
         SessionController.getSessionController().openShell(mHandler, binding.commandSshEditText);
+    }
 
 
-//        new Handler(Looper.getMainLooper()).post(new Runnable() {
-//            @Override
-//            public void run() {
-//
-//                FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
-//                progressDialog.setIndeterminate(false);
-//                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-//                progressDialog.show();
-//
-////                File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
-//                File file = new File(list.get(0));
-//
-//                File[] arr = {file};
-//                String[] des = {file.getName()};
-//
-//                System.out.println("name: " + file.getName());
-//                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
-//            }
-//        });
+
+    private class ConnectMySql extends AsyncTask<String, Void, Integer> {
+        Integer res = -1;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Toast.makeText(AddInspectionResultActivity.this, "Please wait...", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        protected Integer doInBackground(String... params) {
+            try {
+                System.out.println("res: 11221");
+
+                Class.forName("com.mysql.jdbc.Driver");
+                Connection con = DriverManager.getConnection(url, user, pass);
+                System.out.println("Databaseection success");
+
+                Statement st = con.createStatement();
+
+//                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + listOfImage.get(0).getImage() + "','" + binding.dateTimeAppCompatTextView.getText().toString() + "','" + locationInfo  +"'," + list.get(0) + "," + binding.notesAppCompatEditText.getText().toString() + "');";
+                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `Orientation`,`ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('1200px-Bharthana_Althan_area.jpg', 0,'2023-02-13 21:10:32','Althan, Surat','audio_1675955702365.mp3', 'Add notes here');";
+//                if(getIntent().hasExtra("EVENT_DATA")) {
+////                    sql = "UPDATE `EventData` SET `EventDate` = '"+ setSelectedDate +"', `EventTime` = '" + setSelectedTime+ "', `Area` = '" + eventAreaTextInputEditText.getText().toString()  + "', `Category` = " + categoryData.getCategoryID() + ", `Item` = " + itemData.getItemID() + ", `Event` = '" + eventNameTextInputEditText.getText().toString() + "', `Duration` = '" +durationTextInputEditText.getText().toString()+ "' WHERE `DataID` = " + eventid;
+//                } else {
+////                    sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + listOfImage.get(0).getImage() + "','" + binding.dateTimeAppCompatTextView.getText().toString() + "','" + locationInfo  +"'," + list.get(0) + "," + binding.notesAppCompatEditText.getText().toString() + "');";
+//                }
+                int command = st.executeUpdate(sql);
+                res = command;
+
+                System.out.println("res: " + command);
+                st.close();
+                con.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return res;
+        }
+
+        @Override
+        protected void onPostExecute(Integer result) {
+            findViewById(R.id.progressFrameLayout).setVisibility(View.GONE);
+            findViewById(R.id.submitAppCompatTextView).setVisibility(View.VISIBLE);
+            System.out.println("Result: " + result);
+            Intent intent = new Intent();
+            intent.putExtra("update", "update");
+            setResult(RESULT_OK, intent);
+            finish();
+
+            finish();
+        }
     }
 
 }
