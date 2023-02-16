@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -75,7 +76,7 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
     private SessionUserInfo mSUI;
     private Handler mHandler;
     private String mLastLine;
-    List<String> list;
+    List<String> list = new ArrayList<>();
     int requestCode = 1996;
 
     // creating a variable for media recorder object class.
@@ -186,7 +187,16 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
             @Override
             public void onClick(View view) {
                 System.out.println("Clicked submit");
-                new ConnectMySql().execute();
+
+                if(listOfImage.size() == 0) {
+                    Toast.makeText(AddInspectionResultActivity.this, "Please select image", Toast.LENGTH_SHORT).show();
+                } else if(binding.dateTimeAppCompatTextView.getText().toString().isEmpty()) {
+                    Toast.makeText(AddInspectionResultActivity.this, "Please select date and time", Toast.LENGTH_SHORT).show();
+                } else if(binding.notesAppCompatEditText.getText().toString().isEmpty()) {
+                    Toast.makeText(AddInspectionResultActivity.this, "Please add notes", Toast.LENGTH_SHORT).show();
+                } else {
+                    new ConnectMySql().execute();
+                }
             }
         });
 
@@ -297,7 +307,12 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                             @Override
                             public void onDateSelected(Date date) {
                                 System.out.println("Date: " + date);
-                                binding.dateTimeAppCompatTextView.setText(date.toString());
+//                                2023-02-13 21:10:32
+                                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                String dateNew = format.format(date);
+
+
+                                binding.dateTimeAppCompatTextView.setText(dateNew.toString());
                             }
                         }).display();
 
@@ -506,17 +521,12 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                 progressDialog.show();
 
                 File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
-//                File file = new File(list.get(0));
 
                 File[] arr = {file};
                 String[] des = {file.getName()};
 
                 System.out.println("name: " + file.getName());
                 SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
-//                mSUI = new SessionUserInfo(user, base_url, pass, port);
-//
-//                SessionController.getSessionController().setUserInfo(mSUI);
-//                SessionController.getSessionController().connect();
 
             }
 
@@ -654,9 +664,14 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                 System.out.println("Databaseection success");
 
                 Statement st = con.createStatement();
+                String audio = null;
+                if((list.size() > 0)) {
+                    String [] audioSplit = list.get(0).split("/");
+                    audio = (list.size() > 0) ? audioSplit[audioSplit.length - 1]: null;
+                }
 
-//                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + listOfImage.get(0).getImage() + "','" + binding.dateTimeAppCompatTextView.getText().toString() + "','" + locationInfo  +"'," + list.get(0) + "," + binding.notesAppCompatEditText.getText().toString() + "');";
-                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `Orientation`,`ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('1200px-Bharthana_Althan_area.jpg', 0,'2023-02-13 21:10:32','Althan, Surat','audio_1675955702365.mp3', 'Add notes here');";
+                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + listOfImage.get(0).getImage() + "','" + binding.dateTimeAppCompatTextView.getText().toString() + "','" + locationInfo  +"','" + audio + "','" + binding.notesAppCompatEditText.getText().toString() + "');";
+//                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `Orientation`,`ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('1200px-Bharthana_Althan_area.jpg', 0,'2023-02-13 21:10:32','Althan, Surat','audio_1675955702365.mp3', 'Add notes here');";
 //                if(getIntent().hasExtra("EVENT_DATA")) {
 ////                    sql = "UPDATE `EventData` SET `EventDate` = '"+ setSelectedDate +"', `EventTime` = '" + setSelectedTime+ "', `Area` = '" + eventAreaTextInputEditText.getText().toString()  + "', `Category` = " + categoryData.getCategoryID() + ", `Item` = " + itemData.getItemID() + ", `Event` = '" + eventNameTextInputEditText.getText().toString() + "', `Duration` = '" +durationTextInputEditText.getText().toString()+ "' WHERE `DataID` = " + eventid;
 //                } else {
@@ -682,8 +697,6 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
             Intent intent = new Intent();
             intent.putExtra("update", "update");
             setResult(RESULT_OK, intent);
-            finish();
-
             finish();
         }
     }

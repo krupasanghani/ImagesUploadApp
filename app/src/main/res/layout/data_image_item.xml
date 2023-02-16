@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/imageFrameLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/background_with_borders"
+    android:padding="@dimen/_8sdp"
+    android:layout_margin="@dimen/_4sdp">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/audioAppCompatImageView"
+        android:layout_width="@dimen/_100sdp"
+        android:layout_height="@dimen/_100sdp"
+        android:layout_gravity="end|bottom"
+        android:layout_marginStart="@dimen/_8sdp"
+        android:layout_marginTop="@dimen/_8sdp"
+        android:layout_marginEnd="@dimen/_8sdp"
+        android:layout_marginBottom="@dimen/_8sdp"
+        android:background="#80000000"
+        android:padding="@dimen/_4sdp"
+        android:visibility="gone"
+        android:src="@drawable/ic_audio_track" />
+
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/notesNameAppCompatTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@+id/audioAppCompatImageView"
+        android:layout_marginBottom="@dimen/_4sdp"
+        android:fontFamily="@font/ubuntu_medium"
+        android:gravity="start"
+        android:text="@string/image_file"
+        android:layout_marginStart="@dimen/_12sdp"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_10sdp" />
+
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/fileNameAppCompatTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@+id/audioAppCompatImageView"
+        android:fontFamily="@font/ubuntu_medium"
+        android:layout_below="@+id/notesNameAppCompatTextView"
+        android:gravity="start"
+        android:text="@string/image_file"
+        android:layout_marginStart="@dimen/_12sdp"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_10sdp" />
+
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/audioNameAppCompatTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@+id/audioAppCompatImageView"
+        android:layout_marginVertical="@dimen/_4sdp"
+        android:fontFamily="@font/ubuntu_medium"
+        android:layout_below="@+id/fileNameAppCompatTextView"
+        android:gravity="start"
+        android:text="@string/image_file"
+        android:layout_marginStart="@dimen/_12sdp"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_10sdp" />
+</RelativeLayout>

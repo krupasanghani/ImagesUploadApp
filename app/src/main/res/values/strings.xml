@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">EnggServicesInspection</string>
+    <string name="app_name">Image Upload
+    </string>
 
     <string name="equipment_id">Equipment ID</string>
     <string name="location">Location</string>
