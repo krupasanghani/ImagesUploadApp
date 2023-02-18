@@ -12,8 +12,11 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
@@ -41,7 +44,6 @@ import com.github.florent37.singledateandtimepicker.SingleDateAndTimePicker;
 import com.github.florent37.singledateandtimepicker.dialog.SingleDateAndTimePickerDialog;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
@@ -64,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class AddInspectionResultActivity extends AppCompatActivity implements LocationListener, ConnectionStatusListener {
@@ -71,7 +74,6 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
     private ActivityAddInspectionResultBinding binding;
     private FusedLocationProviderClient client;
     private ArrayList<ImageResponse> listOfImage = new ArrayList<>();
-    private ArrayList<Uri> listOfAudio = new ArrayList<>();
 
     private SessionUserInfo mSUI;
     private Handler mHandler;
@@ -88,6 +90,7 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
 
     // string variable is created for storing a file name
     private static String mFileName = null;
+    protected LocationManager locationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,8 +101,6 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
         client = LocationServices.getFusedLocationProviderClient(this);
 
         getLocation();
-
-//        new ConnectMySql().execute();
 
         initUI();
 
@@ -188,11 +189,11 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
             public void onClick(View view) {
                 System.out.println("Clicked submit");
 
-                if(listOfImage.size() == 0) {
+                if (listOfImage.size() == 0) {
                     Toast.makeText(AddInspectionResultActivity.this, "Please select image", Toast.LENGTH_SHORT).show();
-                } else if(binding.dateTimeAppCompatTextView.getText().toString().isEmpty()) {
+                } else if (binding.dateTimeAppCompatTextView.getText().toString().isEmpty()) {
                     Toast.makeText(AddInspectionResultActivity.this, "Please select date and time", Toast.LENGTH_SHORT).show();
-                } else if(binding.notesAppCompatEditText.getText().toString().isEmpty()) {
+                } else if (binding.notesAppCompatEditText.getText().toString().isEmpty()) {
                     Toast.makeText(AddInspectionResultActivity.this, "Please add notes", Toast.LENGTH_SHORT).show();
                 } else {
                     new ConnectMySql().execute();
@@ -384,7 +385,6 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
 //        statusTV.setText("Recording Started");
     }
 
-
     public void playAudio() {
         binding.btnStop.setBackgroundColor(getResources().getColor(R.color.gray));
         binding.btnRecord.setBackgroundColor(getResources().getColor(R.color.purple_200));
@@ -542,7 +542,6 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                 .permission(Permission.ACCESS_COARSE_LOCATION)
                 .permission(Permission.ACCESS_FINE_LOCATION)
                 .request(new OnPermissionCallback() {
-
                     @Override
                     public void onGranted(@NonNull List<String> permissions, boolean allGranted) {
                         if (!allGranted) {
@@ -550,19 +549,11 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                             return;
                         } else {
                             System.out.println("All grant!");
-
+                            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                             if (ActivityCompat.checkSelfPermission(AddInspectionResultActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(AddInspectionResultActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                                 return;
                             }
-                            client.getLastLocation().addOnSuccessListener(AddInspectionResultActivity.this, new OnSuccessListener<Location>() {
-                                @Override
-                                public void onSuccess(Location location) {
-                                    if (location != null) {
-                                        System.out.println("location: " + location);
-//                                        locationInfo = location.getA;
-                                    }
-                                }
-                            });
+                            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, (float) 0, AddInspectionResultActivity.this);
 
                         }
 
@@ -585,38 +576,39 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
+        System.out.println("Latitude:" + location.getLatitude() + ", Longitude:" + location.getLongitude());
 
-    }
+        if (location != null) {
+            Geocoder geocoder;
+            List<Address> addresses = new ArrayList<>();
+            geocoder = new Geocoder(this, Locale.getDefault());
 
-    @Override
-    public void onLocationChanged(@NonNull List<Location> locations) {
-        LocationListener.super.onLocationChanged(locations);
+            try {
+                addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-        for (Location location : locations) {
-            System.out.println("Latitude:" + location.getLatitude() + ", Longitude:" + location.getLongitude());
+            if (addresses.size() > 0) {
+                String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+                String city = addresses.get(0).getLocality();
+                String state = addresses.get(0).getAdminArea();
+                String country = addresses.get(0).getCountryName();
+                String postalCode = addresses.get(0).getPostalCode();
+                String knownName = addresses.get(0).getFeatureName(); // Only if available else return NULL
+
+                System.out.println("address " + address);
+                System.out.println("city " + city);
+                System.out.println("state " + state);
+                System.out.println("country " + country);
+                System.out.println("postalCode " + postalCode);
+                System.out.println("knownName " + knownName);
+
+                locationInfo = address + " " + city + " " + state + " " + country;
+
+            }
         }
     }
-
-    @Override
-    public void onFlushComplete(int requestCode) {
-        LocationListener.super.onFlushComplete(requestCode);
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-        LocationListener.super.onStatusChanged(provider, status, extras);
-    }
-
-    @Override
-    public void onProviderEnabled(@NonNull String provider) {
-        LocationListener.super.onProviderEnabled(provider);
-    }
-
-    @Override
-    public void onProviderDisabled(@NonNull String provider) {
-        LocationListener.super.onProviderDisabled(provider);
-    }
-
 
     @Override
     public void onDisconnected() {
@@ -644,7 +636,6 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
     }
 
 
-
     private class ConnectMySql extends AsyncTask<String, Void, Integer> {
         Integer res = -1;
 
@@ -665,12 +656,12 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
 
                 Statement st = con.createStatement();
                 String audio = null;
-                if((list.size() > 0)) {
-                    String [] audioSplit = list.get(0).split("/");
-                    audio = (list.size() > 0) ? audioSplit[audioSplit.length - 1]: null;
+                if ((list.size() > 0)) {
+                    String[] audioSplit = list.get(0).split("/");
+                    audio = (list.size() > 0) ? audioSplit[audioSplit.length - 1] : null;
                 }
 
-                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + listOfImage.get(0).getImage() + "','" + binding.dateTimeAppCompatTextView.getText().toString() + "','" + locationInfo  +"','" + audio + "','" + binding.notesAppCompatEditText.getText().toString() + "');";
+                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + listOfImage.get(0).getImage() + "','" + binding.dateTimeAppCompatTextView.getText().toString() + "','" + locationInfo + "','" + audio + "','" + binding.notesAppCompatEditText.getText().toString() + "');";
 //                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `Orientation`,`ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('1200px-Bharthana_Althan_area.jpg', 0,'2023-02-13 21:10:32','Althan, Surat','audio_1675955702365.mp3', 'Add notes here');";
 //                if(getIntent().hasExtra("EVENT_DATA")) {
 ////                    sql = "UPDATE `EventData` SET `EventDate` = '"+ setSelectedDate +"', `EventTime` = '" + setSelectedTime+ "', `Area` = '" + eventAreaTextInputEditText.getText().toString()  + "', `Category` = " + categoryData.getCategoryID() + ", `Item` = " + itemData.getItemID() + ", `Event` = '" + eventNameTextInputEditText.getText().toString() + "', `Duration` = '" +durationTextInputEditText.getText().toString()+ "' WHERE `DataID` = " + eventid;
