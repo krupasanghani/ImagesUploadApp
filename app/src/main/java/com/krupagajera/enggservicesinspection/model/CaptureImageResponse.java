@@ -10,6 +10,17 @@ public class CaptureImageResponse implements Serializable {
     String audioFile;
     String notes;
 
+    public CaptureImageResponse() {}
+
+    public CaptureImageResponse(String imgFile, String orientation, String imgDateTime, String imgGPS, String audio, String note) {
+        imageFile = imgFile;
+        this.orientation = orientation;
+        imageDateTime = imgDateTime;
+        imageGPS = imgGPS;
+        audioFile = audio;
+        notes = note;
+    }
+
     public String getAudioFile() {
         return audioFile;
     }

@@ -20,6 +20,7 @@ import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,6 +30,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -48,6 +50,7 @@ import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.krupagajera.enggservicesinspection.databinding.ActivityAddInspectionResultBinding;
+import com.krupagajera.enggservicesinspection.model.CaptureImageResponse;
 import com.krupagajera.enggservicesinspection.model.ImageResponse;
 import com.krupagajera.enggservicesinspection.sshutils.ConnectionStatusListener;
 import com.krupagajera.enggservicesinspection.sshutils.ExecTaskCallbackHandler;
@@ -55,6 +58,7 @@ import com.krupagajera.enggservicesinspection.sshutils.FileProgressDialog;
 import com.krupagajera.enggservicesinspection.sshutils.SessionController;
 import com.krupagajera.enggservicesinspection.sshutils.SessionUserInfo;
 import com.krupagajera.enggservicesinspection.utils.ActionUtilities;
+import com.krupagajera.enggservicesinspection.utils.DBHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,13 +88,19 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
     // creating a variable for media recorder object class.
     private MediaRecorder mRecorder;
 
-    // creating a variable for mediaplayer class
+    // creating a variable for media player class
     private MediaPlayer mPlayer;
     private String locationInfo;
+    private DBHelper dbHandler;
 
     // string variable is created for storing a file name
     private static String mFileName = null;
     protected LocationManager locationManager;
+
+    private String imageFileName;
+    private String audioFileName;
+
+    private CaptureImageResponse offlineCapturedResponse = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,23 +108,88 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
 
         binding = ActivityAddInspectionResultBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        client = LocationServices.getFusedLocationProviderClient(this);
 
-        getLocation();
+        getSupportActionBar().setTitle(getResources().getString(R.string.add_engineering_inspection_service));
+        client = LocationServices.getFusedLocationProviderClient(this);
+        dbHandler = new DBHelper(AddInspectionResultActivity.this);
+
+        if (getSupportActionBar() != null){
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
 
         initUI();
 
-        mSUI = new SessionUserInfo(user, base_url, pass, port);
-
-        SessionController.getSessionController().setUserInfo(mSUI);
-        SessionController.getSessionController().connect();
-
         if (isNetworkAvailable(AddInspectionResultActivity.this)) {
+            getLocation();
+            mSUI = new SessionUserInfo(user, base_url, pass, port);
+
+            SessionController.getSessionController().setUserInfo(mSUI);
+            SessionController.getSessionController().connect();
+
             Toast.makeText(AddInspectionResultActivity.this, "Network available", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(AddInspectionResultActivity.this, "Network not available", Toast.LENGTH_SHORT).show();
         }
     }
+
+
+    ArrayList<CaptureImageResponse> getOfflineData() {
+        ArrayList<CaptureImageResponse> capture = new ArrayList<>();
+        capture = dbHandler.readImageList();
+
+        return capture;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    void databaseDataUpload() {
+
+        ArrayList<CaptureImageResponse> capture =  getOfflineData();
+
+        if(SessionController.isConnected()) {
+            for (CaptureImageResponse imageInfo: capture) {
+                // use currInstance
+                offlineCapturedResponse = imageInfo;
+
+                FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
+                progressDialog.setIndeterminate(false);
+                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
+                if(imageInfo.getImageFile() != null) {
+                    File imageFile = new File(imageInfo.getImageFile());
+                    File[] arrImage = {imageFile};
+                    String[] desImage = {imageFile.getName()};
+
+                    imageFileName = imageFile.getName();
+                    progressDialog.show();
+
+                    SessionController.getSessionController().uploadFiles(arrImage, desImage, progressDialog);
+                }
+
+                if(imageInfo.getAudioFile() != null) {
+                    File audioFile = new File(imageInfo.getAudioFile());
+                    File[] arrAudio = {audioFile};
+                    String[] desAudio = {audioFile.getName()};
+
+                    audioFileName = audioFile.getName();
+                    progressDialog.show();
+
+                    SessionController.getSessionController().uploadFiles(arrAudio, desAudio, progressDialog);
+                }
+
+                new ConnectMySql().execute();
+
+                dbHandler.deleteNewImage(imageInfo.getImageFile());
+
+            }
+        }    }
 
     public boolean isNetworkAvailable(Context context) {
         ConnectivityManager connectivityManager = ((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE));
@@ -164,7 +239,6 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                                 @Override
                                 public void onFail() {
                                     Toast.makeText(AddInspectionResultActivity.this, "Failed", Toast.LENGTH_SHORT).show();
-                                    ;
                                 }
 
                                 @Override
@@ -196,7 +270,22 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                 } else if (binding.notesAppCompatEditText.getText().toString().isEmpty()) {
                     Toast.makeText(AddInspectionResultActivity.this, "Please add notes", Toast.LENGTH_SHORT).show();
                 } else {
-                    new ConnectMySql().execute();
+
+                    if(isNetworkAvailable()) {
+                        new ConnectMySql().execute();
+                    } else {
+                        dbHandler.addNewImage(imageFileName, binding.dateTimeAppCompatTextView.getText().toString(), locationInfo, audioFileName, binding.notesAppCompatEditText.getText().toString() );
+
+                        imageFileName = null;
+                        binding.recordImageAppCompatImageView.setVisibility(View.GONE);
+                        binding.recordAudio.setVisibility(View.GONE);
+                        binding.dateTimeAppCompatTextView.setText("");
+                        audioFileName = null;
+                        binding.notesAppCompatEditText.getText().clear();
+
+                        Toast.makeText(AddInspectionResultActivity.this, "Added record locally. We will upload once internet connection is on", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
                 }
             }
         });
@@ -438,18 +527,23 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
         binding.btnPlay.setBackgroundColor(getResources().getColor(R.color.purple_200));
         binding.btnStopPlay.setBackgroundColor(getResources().getColor(R.color.gray));
 
-        FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
-        progressDialog.setIndeterminate(false);
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        progressDialog.show();
-
         File file = new File(list.get(0));
 
         File[] arr = {file};
         String[] des = {file.getName()};
 
         System.out.println("name: " + file.getName());
-        SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
+        if(isNetworkAvailable()) {
+            FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
+            progressDialog.setIndeterminate(false);
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progressDialog.show();
+
+            SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
+        } else {
+            audioFileName = mFileName;
+        }
+
 //        statusTV.setText("Recording Play Stopped");
     }
 
@@ -475,6 +569,11 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
         return lastLine.trim();
     }
 
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null;
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -515,21 +614,24 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                 listOfImage.clear();
                 listOfImage.add(imageResponse);
 
-                FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
-                progressDialog.setIndeterminate(false);
-                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                progressDialog.show();
-
                 File file = new File(listOfImage.get(listOfImage.size() - 1).getImageFile().getPath());
 
                 File[] arr = {file};
                 String[] des = {file.getName()};
 
                 System.out.println("name: " + file.getName());
-                SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
+                System.out.println("isNetworkAvailable(): " + isNetworkAvailable());
+                if(isNetworkAvailable()) {
+                    FileProgressDialog progressDialog = new FileProgressDialog(AddInspectionResultActivity.this, 0);
+                    progressDialog.setIndeterminate(false);
+                    progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                    progressDialog.show();
 
+                    SessionController.getSessionController().uploadFiles(arr, des, progressDialog);
+                } else {
+                    imageFileName = uri.getPath().toString();
+                }
             }
-
         } else if (resultCode == ImagePicker.RESULT_ERROR) {
             Toast.makeText(this, ImagePicker.getError(data), Toast.LENGTH_SHORT).show();
         } else {
@@ -576,7 +678,7 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
-        System.out.println("Latitude:" + location.getLatitude() + ", Longitude:" + location.getLongitude());
+//        System.out.println("Latitude:" + location.getLatitude() + ", Longitude:" + location.getLongitude());
 
         if (location != null) {
             Geocoder geocoder;
@@ -597,12 +699,12 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                 String postalCode = addresses.get(0).getPostalCode();
                 String knownName = addresses.get(0).getFeatureName(); // Only if available else return NULL
 
-                System.out.println("address " + address);
-                System.out.println("city " + city);
-                System.out.println("state " + state);
-                System.out.println("country " + country);
-                System.out.println("postalCode " + postalCode);
-                System.out.println("knownName " + knownName);
+//                System.out.println("address " + address);
+//                System.out.println("city " + city);
+//                System.out.println("state " + state);
+//                System.out.println("country " + country);
+//                System.out.println("postalCode " + postalCode);
+//                System.out.println("knownName " + knownName);
 
                 locationInfo = address + " " + city + " " + state + " " + country;
 
@@ -633,6 +735,14 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
             }
         });
         SessionController.getSessionController().openShell(mHandler, binding.commandSshEditText);
+
+        if(getOfflineData().size() > 0) {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    databaseDataUpload();
+                }
+            });
+        }
     }
 
 
@@ -661,7 +771,17 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                     audio = (list.size() > 0) ? audioSplit[audioSplit.length - 1] : null;
                 }
 
-                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + listOfImage.get(0).getImage() + "','" + binding.dateTimeAppCompatTextView.getText().toString() + "','" + locationInfo + "','" + audio + "','" + binding.notesAppCompatEditText.getText().toString() + "');";
+
+                String sql;
+                if(listOfImage.size() > 0) {
+                    sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + listOfImage.get(0).getImage() + "','" + binding.dateTimeAppCompatTextView.getText().toString() + "','" + locationInfo + "','" + audio + "','" + binding.notesAppCompatEditText.getText().toString() + "');";
+                } else {
+                    sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + imageFileName + "','" + offlineCapturedResponse.getImageDateTime() + "','" + offlineCapturedResponse.getImageGPS() + "','" + audioFileName + "','" + offlineCapturedResponse.getNotes() + "');";
+
+                }
+
+                System.out.println("Load new: " + binding.dateTimeAppCompatTextView.getText().toString());
+
 //                String sql = "INSERT INTO `ImageCapture`(`ImageFile`, `Orientation`,`ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('1200px-Bharthana_Althan_area.jpg', 0,'2023-02-13 21:10:32','Althan, Surat','audio_1675955702365.mp3', 'Add notes here');";
 //                if(getIntent().hasExtra("EVENT_DATA")) {
 ////                    sql = "UPDATE `EventData` SET `EventDate` = '"+ setSelectedDate +"', `EventTime` = '" + setSelectedTime+ "', `Area` = '" + eventAreaTextInputEditText.getText().toString()  + "', `Category` = " + categoryData.getCategoryID() + ", `Item` = " + itemData.getItemID() + ", `Event` = '" + eventNameTextInputEditText.getText().toString() + "', `Duration` = '" +durationTextInputEditText.getText().toString()+ "' WHERE `DataID` = " + eventid;
@@ -684,6 +804,12 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
         protected void onPostExecute(Integer result) {
             findViewById(R.id.progressFrameLayout).setVisibility(View.GONE);
             findViewById(R.id.submitAppCompatTextView).setVisibility(View.VISIBLE);
+
+            if(offlineCapturedResponse != null) {
+                dbHandler.deleteNewImage(offlineCapturedResponse.getOrientation());
+                offlineCapturedResponse = null;
+            }
+
             System.out.println("Result: " + result);
             Intent intent = new Intent();
             intent.putExtra("update", "update");
@@ -691,5 +817,4 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
             finish();
         }
     }
-
 }
