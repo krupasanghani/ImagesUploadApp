@@ -43,10 +43,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
-public class MainActivity extends AppCompatActivity implements LocationListener {
+public class MainActivity extends AppCompatActivity {
 
-    protected LocationManager locationManager;
-    protected LocationListener locationListener;
     private DataImageAdapter dataImageAdapter;
 
     private ActivityMainBinding binding;
@@ -64,13 +62,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         binding.progressFrameLayout.setVisibility(View.VISIBLE);
         new ConnectMySql().execute();
         initUI();
-
-//        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            return;
-//        }
-//        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, (float) 0, MainActivity.this);
-
     }
 
     private void initUI() {
@@ -85,71 +76,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             }
         });
     }
-
-    @Override
-    public void onLocationChanged(@NonNull Location location) {
-        System.out.println("Location: lat " + location.getLatitude());
-        System.out.println("Location: long " + location.getLongitude());
-
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
-
-        if(location != null) {
-            Geocoder geocoder;
-            List<Address> addresses = new ArrayList<>();
-            geocoder = new Geocoder(this, Locale.getDefault());
-
-            try {
-                addresses = geocoder.getFromLocation(latitude, longitude, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            if(addresses.size() > 0) {
-                String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-                String city = addresses.get(0).getLocality();
-                String state = addresses.get(0).getAdminArea();
-                String country = addresses.get(0).getCountryName();
-                String postalCode = addresses.get(0).getPostalCode();
-                String knownName = addresses.get(0).getFeatureName(); // Only if available else return NULL
-
-                System.out.println("address " + address);
-                System.out.println("city " + city);
-                System.out.println("state " + state);
-                System.out.println("country " + country);
-                System.out.println("postalCode " + postalCode);
-                System.out.println("knownName " + knownName);
-
-            }
-        }
-    }
-
-    @Override
-    public void onLocationChanged(@NonNull List<Location> locations) {
-        LocationListener.super.onLocationChanged(locations);
-    }
-
-    @Override
-    public void onFlushComplete(int requestCode) {
-        LocationListener.super.onFlushComplete(requestCode);
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-        LocationListener.super.onStatusChanged(provider, status, extras);
-    }
-
-    @Override
-    public void onProviderEnabled(@NonNull String provider) {
-        LocationListener.super.onProviderEnabled(provider);
-    }
-
-
-    @Override
-    public void onProviderDisabled(@NonNull String provider) {
-        LocationListener.super.onProviderDisabled(provider);
-    }
-
 
     private class ConnectMySql extends AsyncTask<String, Void, ArrayList<CaptureImageResponse>> {
         ArrayList<CaptureImageResponse> res = new ArrayList();

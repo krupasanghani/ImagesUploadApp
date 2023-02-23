@@ -302,7 +302,7 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
             @Override
             public void onClick(View view) {
                 ImagePicker.with(AddInspectionResultActivity.this)
-                        .crop()                    //Crop image(Optional), Check Customization for more option
+                        .cropSquare()                    //Crop image(Optional), Check Customization for more option
                         .compress(1024)            //Final image size will be less than 1 MB(Optional)
                         .maxResultSize(1080, 1080)    //Final image resolution will be less than 1080 x 1080(Optional)
                         .start();
@@ -771,13 +771,11 @@ public class AddInspectionResultActivity extends AppCompatActivity implements Lo
                     audio = (list.size() > 0) ? audioSplit[audioSplit.length - 1] : null;
                 }
 
-
                 String sql;
                 if(listOfImage.size() > 0) {
                     sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + listOfImage.get(0).getImage() + "','" + binding.dateTimeAppCompatTextView.getText().toString() + "','" + locationInfo + "','" + audio + "','" + binding.notesAppCompatEditText.getText().toString() + "');";
                 } else {
                     sql = "INSERT INTO `ImageCapture`(`ImageFile`, `ImageDateTime`, `ImageGPS`, `AudioFile`, `Notes`) VALUES ('" + imageFileName + "','" + offlineCapturedResponse.getImageDateTime() + "','" + offlineCapturedResponse.getImageGPS() + "','" + audioFileName + "','" + offlineCapturedResponse.getNotes() + "');";
-
                 }
 
                 System.out.println("Load new: " + binding.dateTimeAppCompatTextView.getText().toString());
