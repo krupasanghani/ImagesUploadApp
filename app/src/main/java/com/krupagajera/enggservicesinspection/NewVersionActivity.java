@@ -17,6 +17,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.github.dhaval2404.imagepicker.ImagePicker;
+import com.github.dhaval2404.imagepicker.constant.ImageProvider;
 import com.krupagajera.enggservicesinspection.databinding.ActivityNewVersionBinding;
 
 public class NewVersionActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
@@ -43,14 +44,14 @@ public class NewVersionActivity extends AppCompatActivity implements AdapterView
             @Override
             public void onClick(View view) {
                 ImagePicker.with(NewVersionActivity.this)
-                        .cameraOnly()
+                        .provider(ImageProvider.CAMERA)
                         .start();
             }
         });
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line, countries);
-        binding.searchAutoCompleteTextView.setAdapter(adapter);
-        binding.searchAutoCompleteTextView.setOnItemSelectedListener(this);
+//        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line, countries);
+//        binding.searchAutoCompleteTextView.setAdapter(adapter);
+//        binding.searchAutoCompleteTextView.setOnItemSelectedListener(this);
     }
 
     @Override
@@ -61,31 +62,35 @@ public class NewVersionActivity extends AppCompatActivity implements AdapterView
             Uri uri = data.getData();
             binding.pickedAppCompatImageView.setImageURI(uri);
 
-            dialog.setContentView(R.layout.dialog_layout);
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            dialog.setCancelable(false);
+//            dialog.setContentView(R.layout.dialog_layout);
+//            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+//            dialog.setCancelable(false);
 
             if (selectedOption == 1) {
                 AppCompatEditText notesAppCompatEditText = dialog.findViewById(R.id.notesAppCompatEditText);
                 notesAppCompatEditText.setVisibility(View.VISIBLE);
             }
 
-            if (selectedOption == 0) {
+            binding.audioAppCompatImageView.setVisibility(View.VISIBLE);
+            binding.notesAppCompatEditText.setVisibility(View.VISIBLE);
+            binding.buttonSubmitFrameLayout.setVisibility(View.VISIBLE);
 
-            } else {
-
-                AppCompatTextView submitAppCompatTextView = dialog.findViewById(R.id.submitAppCompatTextView);
-
-                submitAppCompatTextView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        dialog.dismiss();
-                        Toast.makeText(NewVersionActivity.this, "okay clicked", Toast.LENGTH_SHORT).show();
-                    }
-                });
-
-                dialog.show();
-            }
+//            if (selectedOption == 0) {
+//
+//            } else {
+//
+//                AppCompatTextView submitAppCompatTextView = dialog.findViewById(R.id.submitAppCompatTextView);
+//
+//                submitAppCompatTextView.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        dialog.dismiss();
+//                        Toast.makeText(NewVersionActivity.this, "okay clicked", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//
+//                dialog.show();
+//            }
         } else if (resultCode == ImagePicker.RESULT_ERROR) {
             Toast.makeText(this, ImagePicker.getError(data), Toast.LENGTH_SHORT).show();
         } else {
@@ -95,8 +100,8 @@ public class NewVersionActivity extends AppCompatActivity implements AdapterView
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        System.out.println("123: " + binding.searchAutoCompleteTextView.getItemAtPosition(i));
-        System.out.println("123i: " + i);
+//        System.out.println("123: " + binding.searchAutoCompleteTextView.getItemAtPosition(i));
+//        System.out.println("123i: " + i);
 
         selectedOption = i;
 
