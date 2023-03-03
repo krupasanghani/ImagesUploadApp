@@ -2,6 +2,9 @@
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#f3f3f3"
+
     android:orientation="vertical">
 
     <LinearLayout
@@ -21,7 +24,8 @@
             android:layout_width="@dimen/_50sdp"
             android:layout_height="@dimen/_50sdp"
             android:layout_marginVertical="@dimen/_20sdp"
-            android:src="@drawable/ic_camera" />
+            android:src="@drawable/ic_camera"
+            app:tint="@color/black" />
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/pickedAppCompatImageView"

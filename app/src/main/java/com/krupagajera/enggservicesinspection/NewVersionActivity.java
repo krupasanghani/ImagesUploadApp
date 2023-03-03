@@ -1,9 +1,9 @@
 package com.krupagajera.enggservicesinspection;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatEditText;
-import androidx.appcompat.widget.AppCompatTextView;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -11,14 +11,18 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.github.dhaval2404.imagepicker.ImagePicker;
-import com.github.dhaval2404.imagepicker.constant.ImageProvider;
+import com.gun0912.tedpicker.ImagePickerActivity;
+import com.hjq.permissions.OnPermissionCallback;
+import com.hjq.permissions.Permission;
+import com.hjq.permissions.XXPermissions;
 import com.krupagajera.enggservicesinspection.databinding.ActivityNewVersionBinding;
+import com.krupagajera.enggservicesinspection.utils.ActionUtilities;
+
+import java.util.List;
 
 public class NewVersionActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     String[] countries = {"Image Upload", "Image & Audio Upload", "Full Record Upload"};
@@ -43,9 +47,40 @@ public class NewVersionActivity extends AppCompatActivity implements AdapterView
         binding.cameraAppCompatImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ImagePicker.with(NewVersionActivity.this)
-                        .provider(ImageProvider.CAMERA)
-                        .start();
+//                ImagePicker.with(NewVersionActivity.this)
+//                        .provider(ImageProvider.CAMERA)
+//                        .start();
+                XXPermissions.with(NewVersionActivity.this)
+                        .permission(Permission.CAMERA)
+                        .permission(Permission.READ_EXTERNAL_STORAGE)
+                        .request(new OnPermissionCallback() {
+                            @Override
+                            public void onGranted(@NonNull List<String> permissions, boolean allGranted) {
+                                if (!allGranted) {
+                                    ActionUtilities.showToast(NewVersionActivity.this, "获取部分权限成功，但部分权限未正常授予");
+                                    return;
+                                } else {
+                                    System.out.println("All grant!");
+
+                                    Intent intent  = new Intent(NewVersionActivity.this, ImagePickerActivity.class);
+                                    startActivityForResult(intent, 1001);
+                                }
+
+                                ActionUtilities.showToast(NewVersionActivity.this, "获取录音和日历权限成功");
+                            }
+
+                            @Override
+                            public void onDenied(@NonNull List<String> permissions, boolean doNotAskAgain) {
+                                if (doNotAskAgain) {
+                                    ActionUtilities.showToast(NewVersionActivity.this, "被永久拒绝授权，请手动授予录音和日历权限");
+                                    XXPermissions.startPermissionActivity(NewVersionActivity.this, permissions);
+                                } else {
+                                    ActionUtilities.showToast(NewVersionActivity.this, "获取录音和日历权限失败");
+                                }
+                            }
+                        });
+
+
             }
         });
 
