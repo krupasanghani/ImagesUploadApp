@@ -15,7 +15,6 @@ import android.widget.AdapterView;
 import android.widget.Toast;
 
 import com.github.dhaval2404.imagepicker.ImagePicker;
-import com.gun0912.tedpicker.ImagePickerActivity;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
@@ -62,8 +61,8 @@ public class NewVersionActivity extends AppCompatActivity implements AdapterView
                                 } else {
                                     System.out.println("All grant!");
 
-                                    Intent intent  = new Intent(NewVersionActivity.this, ImagePickerActivity.class);
-                                    startActivityForResult(intent, 1001);
+//                                    Intent intent  = new Intent(NewVersionActivity.this, ImagePickerActivity.class);
+//                                    startActivityForResult(intent, 1001);
                                 }
 
                                 ActionUtilities.showToast(NewVersionActivity.this, "获取录音和日历权限成功");

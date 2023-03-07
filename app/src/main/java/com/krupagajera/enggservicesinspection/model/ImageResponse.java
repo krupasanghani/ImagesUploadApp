@@ -9,7 +9,6 @@ public class ImageResponse implements Serializable {
     String image;
     String imageId;
     Uri imageFile;
-
     File audioFile;
 
     public void setAudioFile(File audioFile) {

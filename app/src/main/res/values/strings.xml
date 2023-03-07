@@ -11,6 +11,8 @@
     <string name="image_gps">ImageGPS</string>
     <string name="image_date_time">ImageDateTime</string>
     <string name="image_file">ImageFile</string>
+    <string name="add_audio">Add Audio</string>
+    <string name="add_notes">Add Notes</string>
     <string name="btn_submit">Submit</string>
     <string name="add_engineering_inspection_service">Add Inspection Service</string>
     <string name="start_recording">Start recording</string>

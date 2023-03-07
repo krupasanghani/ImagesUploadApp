@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="@dimen/_18sdp">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Note"
+        android:padding="@dimen/_8sdp"
+        android:gravity="center"
+        android:textColor="@color/black"
+        android:textSize="@dimen/_18sdp"
+        android:textStyle="bold" />
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/notesAppCompatEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/recordAudio"
+        android:layout_marginVertical="@dimen/_4sdp"
+        android:background="@drawable/background_with_borders"
+        android:fontFamily="@font/ubuntu_regular"
+        android:hint="@string/notes"
+        android:maxLines="4"
+        android:padding="@dimen/_12sdp"
+        android:textColorHint="@color/black"
+        android:textSize="@dimen/_12sdp" />
+
+
+    <FrameLayout
+        android:id="@+id/buttonSubmitFrameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/notesAppCompatEditText"
+        android:layout_marginVertical="@dimen/_14sdp">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/submitAppCompatTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@drawable/background_primary"
+            android:fontFamily="@font/ubuntu_medium"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:padding="@dimen/_14sdp"
+            android:text="@string/btn_submit"
+            android:textColor="@color/white"
+            android:textSize="@dimen/_12sdp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/progressFrameLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+</LinearLayout>

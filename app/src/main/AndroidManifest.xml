@@ -11,11 +11,8 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
-
-    <uses-feature android:name="android.hardware.camera" />
-    <uses-feature
-        android:name="android.hardware.camera.autofocus"
-        android:required="false" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -28,9 +25,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EnggServicesInspection"
         tools:targetApi="31">
-        <!--        <activity-->
-        <!--            android:name=".NewVersionActivity"-->
-        <!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name=".upload.UploadRecordActivity"-->
+<!--            android:exported="false" />-->
+        <!-- <activity -->
+        <!-- android:name=".NewVersionActivity" -->
+        <!-- android:exported="false" /> -->
         <!-- <activity -->
         <!-- android:name=".RecordEnterActivity" -->
         <!-- android:exported="false"> -->
@@ -46,7 +46,7 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".NewVersionActivity"
+            android:name=".upload.UploadRecordActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -58,10 +58,6 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
-
-        <activity
-            android:name="com.gun0912.tedpicker.ImagePickerActivity"
-            android:screenOrientation="portrait" />
 
         <meta-data
             android:name="ScopedStorage"
