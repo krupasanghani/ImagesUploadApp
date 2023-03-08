@@ -23,6 +23,15 @@
         android:layout_gravity="center"
         android:src="@drawable/ic_mic" />
 
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/audioPauseAppCompatImageView"
+        android:layout_width="@dimen/_50sdp"
+        android:layout_height="@dimen/_50sdp"
+        android:layout_marginVertical="@dimen/_12sdp"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:src="@drawable/ic_pause" />
+
     <FrameLayout
         android:id="@+id/buttonSubmitFrameLayout"
         android:layout_width="match_parent"
